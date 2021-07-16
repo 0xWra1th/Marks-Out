@@ -11,7 +11,7 @@ import subprocess
 # VARIABLES
 USERNAME = str(sys.argv[1])
 PASSWORD = str(sys.argv[2])
-ALERT_EMAIL = str(sys.argv[3])
+ALERT_EMAILS = [str(sys.argv[1])]
 prevMarks = []
 marks = []
 
@@ -35,7 +35,6 @@ def poll():
 	passField.send_keys(Keys.RETURN)
 
 	if "PROCEED WITHOUT PASSWORD CHANGE" in driver.page_source:
-		#print("Your password is pretty old...")
 		try:
 			driver.find_element_by_partial_link_text('PROCEED').click()
 		except:
@@ -45,14 +44,13 @@ def poll():
 	oldTab = driver.current_window_handle
 
 	time.sleep(3)
-	#print("Entering Student Center.")
+
 	try:
 		driver.find_element_by_link_text('Student Centre').click()
 	except:
 		time.sleep(5)
 		driver.find_element_by_link_text('Student Centre').click()
 
-	#print("Clicking on Current Results!")
 
 	time.sleep(3)
 
@@ -83,14 +81,20 @@ def poll():
 			break
 
 	driver.close()
+	res = subprocess.check_call("pkill chrome", shell=True)
+	return marks
 
 def alert():
 	# RUN SENDMAIL SCRIPT
-	res = subprocess.check_call("./sendMail", str(ALERT_EMAIL), shell=True)
+	for email in ALERT_EMAILS:
+		res = subprocess.check_call("./sendMail %s" % str(email), shell=True)
 
 while(True):
-	poll()
-	if marks != prevMarks:
-		alert()
-	time.sleep(60)
-
+	try:
+		marks = poll()
+		if marks != prevMarks and prevMarks != []:
+			alert()
+		prevMarks = marks
+		time.sleep(60)
+	except:
+		pass
