@@ -11,7 +11,8 @@ import subprocess
 # VARIABLES
 USERNAME = str(sys.argv[1])
 PASSWORD = str(sys.argv[2])
-ALERT_EMAILS = [str(sys.argv[1])]
+LOGIN_EMAIL = str(sys.argv[1])+"@tuks.co.za"
+ALERT_EMAILS = [LOGIN_EMAIL]
 prevMarks = []
 marks = []
 
@@ -45,7 +46,7 @@ def poll():
 
 	time.sleep(3)
 
-	try:
+	try:str(sys.argv[1])
 		driver.find_element_by_link_text('Student Centre').click()
 	except:
 		time.sleep(5)
@@ -84,16 +85,26 @@ def poll():
 	res = subprocess.check_call("pkill chrome", shell=True)
 	return marks
 
-def alert():
+def alert(mark):
 	# RUN SENDMAIL SCRIPT
-	for email in ALERT_EMAILS:
-		res = subprocess.check_call("./sendMail %s" % str(email), shell=True)
+	for i,email in enumerate(ALERT_EMAILS):
+		if email == LOGIN_EMAIL:
+			res = subprocess.check_call("touch mail.txt", shell=True)
+			res = subprocess.check_call("echo \"%s\" > mail.txt" % str("Subject: "+str(mark[0]+": "+str(mark[1]))+"\r\nFrom: Mark Alert<"+str(SENDER)+">\r\n\r\nYou have a new mark available on the UPnet Portal!!"), shell=True)
+			res = subprocess.check_call("./sendMail %s" % str(email), shell=True)
+			res = subprocess.check_call("rm mail.txt", shell=True)
+		else:
+			res = subprocess.check_call("touch mail.txt", shell=True)
+			res = subprocess.check_call("echo \"%s\" > mail.txt" % str("Subject: "+str(mark[0])+" Mark Released!\r\nFrom: Mark Alert<"+str(SENDER)+">\r\n\r\nYou have a new mark available on the UPnet Portal!!\r\n"), shell=True)
+			res = subprocess.check_call("./sendMail %s" % str(email), shell=True)
+			res = subprocess.check_call("rm mail.txt", shell=True)
 
 while(True):
 	try:
 		marks = poll()
-		if marks != prevMarks and prevMarks != []:
-			alert()
+		for mark in marks:
+			if mark not in prevMarks and prevMarks != []:
+				alert(mark)
 		prevMarks = marks
 		time.sleep(60)
 	except:
