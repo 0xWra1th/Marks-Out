@@ -46,7 +46,7 @@ def poll():
 
 	time.sleep(3)
 
-	try:str(sys.argv[1])
+	try:
 		driver.find_element_by_link_text('Student Centre').click()
 	except:
 		time.sleep(5)
